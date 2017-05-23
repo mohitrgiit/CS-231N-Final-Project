@@ -13,7 +13,7 @@ import sys
 def URLtoPixels(url, width, height):
 	start = time.clock()
 	try:
-		resp = requests.get(url, timeout=0.5)
+		resp = requests.get(url, timeout=1.0)
 	except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:  # Response timeout
 		return (None, "Response timeout")
 	if resp.status_code != 200:  # HTTP response error
