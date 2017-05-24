@@ -22,7 +22,7 @@ def URLtoPixels(url, width, height):
 		img = Image.open(StringIO(resp.content))
 		img = img.resize((width, height), resample=Image.LANCZOS)
 		pixels = list(img.getdata())
-	except IOError as e:  # Invalid/corrupted image data
+	except (IOError, ZeroDivisionError) as e:  # Invalid/corrupted image data
 		return (None, "Invalid/unreadable image data")
 	try:
 		if len(pixels[0]) != 3:  # Not RGB image format
