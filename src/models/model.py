@@ -120,6 +120,7 @@ class Model:
             self._val_acc_hist.append(acc_val)
             
         # Save model
+
         if train_config.saver_address == True: 
             # Save trained model to data folder
             saver.save(session, train_config.saver_address + 'classification_model')      
