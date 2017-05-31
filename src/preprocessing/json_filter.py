@@ -21,16 +21,17 @@ def sort(dict_list, num_posts):
     temp = sorted(dict_list, key = key, reverse = True)
     return(temp[:num_posts])
 
-def import_data(input_address, output_address, date, outputs = None, subreddit = None, print_flag = False):
+def import_data(input_address, inputName, output_address, outputName, outputs = None, subreddit = None, print_flag = False):
     if subreddit == None:
         raise NameError('Please enter a list of subreddits')
     if outputs == None:
         raise NameError('Please enter desired number of top outputs')
     # Open the file to be filtered
     f = open(input_address, "r")
+    output_stats = open(output_address + outputName + '_stats', "a")
     # Open the output file to be written to
     #output_files = []
-    output_file = open(output_address + date + '_raw', "a")
+    output_file = open(output_address + outputName + '_raw', "a")
     num_outputs_list = []
     output_listOfLists = []
     
@@ -94,16 +95,23 @@ def import_data(input_address, output_address, date, outputs = None, subreddit =
     output_file.close()
         
     # print the number of posts from each subreddit
+    output_stats.write('Dates: ' + inputName + '\n')
     sub_iter = 0
     for i in subreddit:
-        print(i + ' posts found: ' + str(num_outputs_list[sub_iter]) )
+        output_stats.write(i + ' posts found: ' + str(num_outputs_list[sub_iter]) + '\n')
         sub_iter+=1        
            
+    output_stats.write('posts seen: ' + str(posts_seen) + '\n')
+    output_stats.write('max posts saved: ' + str(outputs) + '\n')
+    output_stats.write('reading errors: ' + str(read_errors) + '\n')
+    output_stats.write('jpg errors: ' + str(jpg_errors) + '\n\n')
+
+    '''
     print('')    
     print('posts seen: ' + str(posts_seen))
     print('reading errors: ' + str(read_errors))
     print('jpg errors: ' + str(jpg_errors))
-
+    '''
     
 # Test filter function
 if __name__ == "__main__":
@@ -111,9 +119,9 @@ if __name__ == "__main__":
     start_time = time.time()
     
     # input and output addresses
-    input_address = "/Users/tylerchase/Documents/Stanford_Classes/CS231n_CNN_for_Visual_Recognition/final_project/2016_data/RS_2017-01"
+    input_address = "/Volumes/Seagate Backup Plus Drive/redditPostData/"
     #input_address = "/Users/tylerchase/Documents/Stanford_Classes/CS224n_Natural_Language_Processing_with_Deep_Learning/final project/data/201512/RS_2015-12"
-    output_address = "/Users/tylerchase/Documents/Stanford_Classes/CS231n_CNN_for_Visual_Recognition/final_project/filter_data/"
+    output_address = "/Volumes/Seagate Backup Plus Drive/redditPostData/"
     
     # subreddit list
     # listed with similar subs on each line
@@ -182,10 +190,40 @@ if __name__ == "__main__":
                   'dogpictures'
                   ]
     
+    files = ['RS_2015-01',
+             'RS_2015-02',
+             'RS_2015-03',
+             'RS_2015-04',
+             'RS_2015-05',
+             'RS_2015-06',
+             'RS_2015-07',
+             'RS_2015-08',
+             'RS_2015-09',
+             'RS_2015-10',
+             'RS_2015-11',
+             'RS_2015-12',
+             'RS_2016-01',
+             'RS_2016-02',
+             'RS_2016-03',
+             'RS_2016-04',
+             'RS_2016-05',
+             'RS_2016-06',
+             'RS_2016-07',
+             'RS_2016-08',
+             'RS_2016-09',
+             'RS_2016-10',
+             'RS_2016-11',
+             'RS_2016-12']
+    '''
+    files = ['RS_2015-01',
+             'RS_2015-02']
+
+    '''
     # test function
-    import_data(input_address, output_address, 'combined', outputs = 100, subreddit = subreddits, print_flag = False)
+    for i in files:
+        import_data(input_address+i, i, output_address, 'combined', outputs = 75, subreddit = subreddits, print_flag = False)
         
-    print('run_time: ' + str( round(time.time()-start_time,1) ) + 's')
+        print('run_time: ' + str( round(time.time()-start_time,1) ) + 's')
         
         
     
