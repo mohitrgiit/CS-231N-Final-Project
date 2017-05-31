@@ -120,9 +120,9 @@ class Model:
             self._val_acc_hist.append(acc_val)
             
         # Save model
-        if self.save_flag == True: 
+        if train_config.saver_address: 
             # Save trained model to data folder
-            saver.save(self.session, self.saver_address + 'classification_model')      
+            saver.save(self.session, train_config.saver_address + 'classification_model')      
             
             
     # minibatch determining training error and accuracy to avoid RAM issues
