@@ -1,15 +1,15 @@
 import numpy as np
 import random
-import cPickle as pickle
+import pickle
 
 class Data:
-    def __init__(self, X_train, Y_train, X_val, Y_val, X_test, Y_test):
+    def __init__(self, X_train, y_train, X_val, y_val, X_test, y_test):
         self.X_train = X_train
-        self.Y_train = Y_train
+        self.y_train = y_train
         self.X_val = X_val
-        self.Y_val = Y_val
+        self.y_val = y_val
         self.X_test = X_test
-        self.Y_test = Y_test
+        self.y_test = y_test
         
 # Function for permuting and splitting data into training, developement, and test
 def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):

@@ -79,6 +79,7 @@ class Model:
         
     def train(self, data, session, train_config):
         # Save model parameters
+        saver = None
         if train_config.saver_address:    
             saver = tf.train.Saver()
             
@@ -88,20 +89,19 @@ class Model:
         for epoch in range(train_config.num_epochs):
             startTime_epoch = time.clock()
             startTime_batch = time.clock()
-            
             # Loop over minibatches
             for j,i in enumerate(np.arange(0, num_train, train_config.minibatch_size)):
-                batch_x = data.X_train[i:i+train_config.minibatch_size]
-                batch_y = data.Y_train[i:i+train_config.minibatch_size]
-                session.run(self.optimize, {self.X_placeholder:batch_x, self.y_placeholder:batch_y, \
+                batch_X = data.X_train[i:i+train_config.minibatch_size]
+                batch_y = data.y_train[i:i+train_config.minibatch_size]
+                session.run(self.optimize, {self.X_placeholder:batch_X, self.y_placeholder:batch_y, \
                                             self.is_training_placeholder:True})
                 
                 # print run time, current batch, and current epoch
-                if not j%self.config.print_every:
+                if not j%train_config.print_every:
                     batch_time = time.clock() - startTime_batch
                     startTime_batch = time.clock()
                     print("Batch {:d}/{:d} of epoch {:d} finished in {:f} seconds".format(j+1,  \
-                        int(round(num_train/train_config.minibatch_size)), (epoch+1), batch_time))
+                    int(round(num_train/train_config.minibatch_size)), (epoch+1), batch_time))
              
             # Print current output, return losses, and return accuracies
             epoch_time = time.clock() - startTime_epoch
@@ -109,7 +109,7 @@ class Model:
             variables = [self.cost, self.accuracy]
             loss_train, acc_train = self.train_batch(data, session, train_config)
             loss_val, acc_val = session.run(variables, \
-                {self.X_placeholder:self.X_val, self.y_placeholder:data.Y_val, self.is_training_placeholder:False})
+                {self.X_placeholder:data.X_val, self.y_placeholder:data.y_val, self.is_training_placeholder:False})
             print('Epoch:{:2d}, Training Accuracy {:3.1f}%, Vallidation Accuracy:{:3.1f}%'.format( \
                 (epoch + 1), (100*acc_train), (100*acc_val)))
             
@@ -120,9 +120,9 @@ class Model:
             self._val_acc_hist.append(acc_val)
             
         # Save model
-        if self.save_flag == True: 
+        if train_config.saver_address == True: 
             # Save trained model to data folder
-            saver.save(self.session, self.saver_address + 'classification_model')      
+            saver.save(session, train_config.saver_address + 'classification_model')      
             
             
     # minibatch determining training error and accuracy to avoid RAM issues
@@ -133,12 +133,12 @@ class Model:
         sample_size = data.X_train.shape[0]
         batch_size = train_config.batch_size
         for j,i in enumerate(np.arange(0, sample_size, batch_size)):
-            batch_x = data.X_train[i:i+batch_size,:,:,:]
+            batch_X = data.X_train[i:i+batch_size]
             batch_y = data.y_train[i:i+batch_size]
             variables = [self.cost, self.accuracy]
             cost_i, accuracy_i = session.run(variables, \
-                {self.X_placeholder:batch_x, self.y_placeholder:batch_y, self.is_training_placeholder:False})
-            num_sampled = np.shape(batch_x)[0]
+                {self.X_placeholder:batch_X, self.y_placeholder:batch_y, self.is_training_placeholder:False})
+            num_sampled = np.shape(batch_X)[0]
             cost += cost_i
             correct += accuracy_i*num_sampled
             if train_config.print_batch:
@@ -154,8 +154,8 @@ class Model:
     def plot_loss_acc(self, data):
         import matplotlib.pyplot as plt
         
-        val_loss_hist_scale = np.array(self.val_loss_hist)/np.shape(data.X_val)[0]
-        train_loss_hist_scale = np.array(self.train_loss_hist)/np.shape(data.X_train)[0]
+        val_loss_hist_scale = np.array(self._val_loss_hist)/np.shape(data.X_val)[0]
+        train_loss_hist_scale = np.array(self._train_loss_hist)/np.shape(data.X_train)[0]
 
         f, (ax1, ax2) = plt.subplots(1,2)
         ax1.set_title('Loss')
@@ -164,7 +164,7 @@ class Model:
         ax1.plot(val_loss_hist_scale, label = 'val')
 
         ax2.set_title('Accuracy')
-        ax2.plot(self.train_acc_hist, label = 'train')
-        ax2.plot(self.val_acc_hist, label = 'val')
+        ax2.plot(self._train_acc_hist, label = 'train')
+        ax2.plot(self._val_acc_hist, label = 'val')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
