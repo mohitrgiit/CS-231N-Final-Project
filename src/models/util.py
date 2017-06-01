@@ -23,6 +23,9 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
         subs = np.array(subs)
     with open(address + file_names['dict'], 'rb') as file_3:
         dictionary = pickle.load(file_3)
+    with open(address + file_names['nsfw'], 'rb') as file_4:
+        nsfw = pickle.load(file_4)
+        nsfw = np.array(nsfw)
     # Mix data and split into tran, dev, and test sets
     N,W,H,C = np.shape(images)
     indices = np.arange(N)
@@ -33,10 +36,13 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     dev_end = train_end + int(dev_percent*N/100)
     X_train = images[:train_end]
     y_train = subs[:train_end]
+    y_train_2 = nsfw[:train_end]
     X_val = images[train_end:dev_end]
     y_val = subs[train_end:dev_end]
+    y_val_2 = nsfw[train_end:dev_end]
     X_test = images[dev_end:]
     y_test = subs[dev_end:]
+    y_test_2 = nsfw[dev_end:]
     
     # Normalize the data: subtract the mean image
     mean_image = np.mean(X_train, axis=0)
@@ -44,6 +50,6 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     X_val -= mean_image
     X_test -= mean_image
     
-    data = Data(X_train, y_train, X_val, y_val, X_test, y_test)
+    data = Data(X_train, y_train, y_train_2 X_val, y_val, y_val_2, X_test, y_test, y_test_2)
     
     return data, dictionary
