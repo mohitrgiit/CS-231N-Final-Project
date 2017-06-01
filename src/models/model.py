@@ -121,7 +121,7 @@ class Model:
             
         # Save model
 
-        if train_config.saver_address == True: 
+        if train_config.saver_address: 
             # Save trained model to data folder
             saver.save(session, train_config.saver_address + 'classification_model')      
             
