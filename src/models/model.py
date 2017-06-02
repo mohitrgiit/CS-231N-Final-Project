@@ -122,7 +122,7 @@ class Model:
 
         if train_config.saver_address == True: 
             # Save trained model to data folder
-            saver.save(session, train_config.saver_address + 'classification_model')      
+            saver.save(session, train_config.saver_address + train_config.save_file_name)      
             
             
     # evaluate the performance (cost and accuracy) of the current model on some data
