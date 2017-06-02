@@ -89,30 +89,29 @@ class Model:
         for epoch in range(train_config.num_epochs):
             startTime_epoch = time.clock()
             startTime_batch = time.clock()
+            print("---------------------------------------------------------")
             # Loop over minibatches
             for j,i in enumerate(np.arange(0, num_train, train_config.minibatch_size)):
                 batch_X = data.X_train[i:i+train_config.minibatch_size]
                 batch_y = data.y_train[i:i+train_config.minibatch_size]
-                session.run(self.optimize, {self.X_placeholder:batch_X, self.y_placeholder:batch_y, \
-                                            self.is_training_placeholder:True})
+                session.run(self.optimize, {self.X_placeholder:batch_X, \
+                                            self.y_placeholder:batch_y,self.is_training_placeholder:True})
                 
                 # print run time, current batch, and current epoch
                 if not j%train_config.print_every:
                     batch_time = time.clock() - startTime_batch
                     startTime_batch = time.clock()
                     print("Batch {:d}/{:d} of epoch {:d} finished in {:f} seconds".format(j+1,  \
-                    int(round(num_train/train_config.minibatch_size)), (epoch+1), batch_time))
+                    int(num_train/train_config.minibatch_size)+1, (epoch+1), batch_time))
              
             # Print current output, return losses, and return accuracies
             epoch_time = time.clock() - startTime_epoch
-            print("Epoch {:d} finished in {:f} seconds".format( (epoch + 1), epoch_time))
+            print("Epoch {:d} training finished in {:f} seconds".format(epoch + 1, epoch_time))
             variables = [self.cost, self.accuracy]
-            loss_train, acc_train = self.train_batch(data, session, train_config)
-            loss_val, acc_val = session.run(variables, \
-                {self.X_placeholder:data.X_val, self.y_placeholder:data.y_val, self.is_training_placeholder:False})
-            print('Epoch:{:2d}, Training Accuracy {:3.1f}%, Vallidation Accuracy:{:3.1f}%'.format( \
-                (epoch + 1), (100*acc_train), (100*acc_val)))
-            
+            loss_train, acc_train = self.eval(data, session, "train")
+            loss_val, acc_val = self.eval(data, session, "val")
+            evaluation_time = time.clock() - epoch_time
+            print("Epoch {:d} evaluation finished in {:f} seconds".format(epoch+1, evaluation_time))
             # Append losses and accuracies to list
             self._train_loss_hist.append(loss_train)
             self._val_loss_hist.append(loss_val)
@@ -121,35 +120,41 @@ class Model:
             
         # Save model
 
-        if train_config.saver_address: 
+        if train_config.saver_address == True: 
             # Save trained model to data folder
             saver.save(session, train_config.saver_address + train_config.save_file_name)      
             
             
-    # minibatch determining training error and accuracy to avoid RAM issues
-    def train_batch(self, data, session, train_config):
+    # evaluate the performance (cost and accuracy) of the current model on some data
+    # split is train or val or test
+    def eval(self, data, session, split="train"):
+        if split == "train":
+            X = data.X_train
+            y = data.y_train
+        elif split == "val":
+            X = data.X_val
+            y = data.y_val
+        elif split == "test":
+            X = data.X_test
+            y = data.y_test
+            
         # Loop over minibatches
-        cost = 0
-        correct = 0
-        sample_size = data.X_train.shape[0]
-        batch_size = train_config.batch_size
+        cost = 0.0
+        correct = 0.0
+        sample_size = X.shape[0]
+        batch_size = self.config.batch_size
         for j,i in enumerate(np.arange(0, sample_size, batch_size)):
-            batch_X = data.X_train[i:i+batch_size]
-            batch_y = data.y_train[i:i+batch_size]
+            batch_X = X[i:i+batch_size]
+            batch_y = y[i:i+batch_size]
             variables = [self.cost, self.accuracy]
             cost_i, accuracy_i = session.run(variables, \
                 {self.X_placeholder:batch_X, self.y_placeholder:batch_y, self.is_training_placeholder:False})
             num_sampled = np.shape(batch_X)[0]
             cost += cost_i
-            correct += accuracy_i*num_sampled
-            if train_config.print_batch:
-                # print run time, current batch, and current epoch
-                print("Batch {:d}/{:d}".format(j+1, int(round(sample_size/batch_size))) )
-                print("cost: ", cost_i)
-                print("accuracy: ", accuracy_i)
-                print("num_sampled: ", num_sampled)
-                print()
-        accuracy = np.float(correct)/sample_size
+            correct += accuracy_i * num_sampled
+
+        accuracy = correct / sample_size
+        print('{} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
         return cost, accuracy 
             
     def plot_loss_acc(self, data):
