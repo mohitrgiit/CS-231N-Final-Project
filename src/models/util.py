@@ -53,6 +53,6 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     X_val -= mean_image
     X_test -= mean_image
     
-    data = Data(X_train, y_train, y_train_2 X_val, y_val, y_val_2, X_test, y_test, y_test_2)
+    data = Data(X_train, y_train, y_train_2, X_val, y_val, y_val_2, X_test, y_test, y_test_2)
     
     return data, dictionary
