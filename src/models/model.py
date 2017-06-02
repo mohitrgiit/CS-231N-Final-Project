@@ -123,7 +123,7 @@ class Model:
 
         if train_config.saver_address: 
             # Save trained model to data folder
-            saver.save(session, train_config.saver_address + 'classification_model')      
+            saver.save(session, train_config.saver_address + train_config.save_file_name)      
             
             
     # minibatch determining training error and accuracy to avoid RAM issues
