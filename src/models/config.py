@@ -10,7 +10,13 @@ class ModelConfig():
         
         self.learning_rate = learning_rate
         self.keep_prob = keep_prob
-        
+
+        # ResNet variables
+        self.RS_NdistinctConvLayers   = 0
+        self.RS_Nlayers               = []
+        self.RS_Nfilters              = []
+        self.RS_kernelSizes           = []
+
 class TrainConfig():
     def __init__(self, num_epochs=10, minibatch_size=64, print_every=100, saver_address=None,
                  save_file_name = 'classification_model', batch_size=2000, print_batch=False):
