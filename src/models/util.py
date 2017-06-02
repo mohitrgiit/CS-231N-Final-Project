@@ -3,13 +3,16 @@ import random
 import pickle
 
 class Data:
-    def __init__(self, X_train, y_train, X_val, y_val, X_test, y_test):
+    def __init__(self, X_train, y_train, y_train_2, X_val, y_val, y_val_2, X_test, y_test, y_test_2):
         self.X_train = X_train
         self.y_train = y_train
+        self.y_train_2 = y_train_2
         self.X_val = X_val
         self.y_val = y_val
+        self.y_val_2 = y_val_2
         self.X_test = X_test
         self.y_test = y_test
+        self.y_test_2 = y_test_2
         
 # Function for permuting and splitting data into training, developement, and test
 def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
