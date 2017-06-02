@@ -106,11 +106,12 @@ class Model:
              
             # Print current output, return losses, and return accuracies
             epoch_time = time.clock() - startTime_epoch
+            startTime_eval = time.clock()
             print("Epoch {:d} training finished in {:f} seconds".format(epoch + 1, epoch_time))
             variables = [self.cost, self.accuracy]
             loss_train, acc_train = self.eval(data, session, "train")
             loss_val, acc_val = self.eval(data, session, "val")
-            evaluation_time = time.clock() - epoch_time
+            evaluation_time = time.clock() - startTime_eval
             print("Epoch {:d} evaluation finished in {:f} seconds".format(epoch+1, evaluation_time))
             # Append losses and accuracies to list
             self._train_loss_hist.append(loss_train)
