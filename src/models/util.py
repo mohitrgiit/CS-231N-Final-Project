@@ -30,6 +30,8 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     with open(address + file_names['nsfw'], 'rb') as file_4:
         nsfw = pickle.load(file_4)
         nsfw = np.array(nsfw)
+    # Fix dictionary order
+    dictionary = {index:subreddit for subreddit, index in dictionary.items()}
     # Mix data and split into tran, dev, and test sets
     N,W,H,C = np.shape(images)
     indices = np.arange(N)
@@ -57,3 +59,6 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     data = Data(X_train, y_train, y_train_2, X_val, y_val, y_val_2, X_test, y_test, y_test_2, mean_image)
     
     return data, dictionary
+
+def get_class_names(data, dictionary):
+    return [dictionary[index] for index in data.y_train]
