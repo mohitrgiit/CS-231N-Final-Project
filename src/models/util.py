@@ -35,6 +35,7 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     random.shuffle(indices)
     images = images[indices]
     subs = subs[indices]
+    nsfw = nsfw[indices]
     train_end = int(train_percent*N/100)
     dev_end = train_end + int(dev_percent*N/100)
     X_train = images[:train_end]
