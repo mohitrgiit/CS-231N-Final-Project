@@ -98,7 +98,7 @@ class Model:
                                             self.y_placeholder:batch_y,self.is_training_placeholder:True})
                 
                 # print run time, current batch, and current epoch
-                if not j%train_config.print_every:
+                if (j + 1) % train_config.print_every == 0:
                     batch_time = time.clock() - startTime_batch
                     startTime_batch = time.clock()
                     print("Batch {:d}/{:d} of epoch {:d} finished in {:f} seconds".format(j+1,  \
@@ -121,7 +121,7 @@ class Model:
             
         # Save model
 
-        if train_config.saver_address == True: 
+        if train_config.saver_address: 
             # Save trained model to data folder
             saver.save(session, train_config.saver_address + train_config.save_file_name)      
             

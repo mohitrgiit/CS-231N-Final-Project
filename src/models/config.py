@@ -19,5 +19,3 @@ class TrainConfig():
         self.print_every = print_every
         self.saver_address = saver_address
         self.save_file_name = save_file_name
-        
-        self.print_batch = print_batch
