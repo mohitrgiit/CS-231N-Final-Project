@@ -51,7 +51,12 @@ class Model:
     
     @lazy_property
     def cost(self):
-        target_vec = tf.one_hot(self.y_placeholder, self.config.class_size)
+        if self.config.output == 'subreddit':
+            target_vec = tf.one_hot(self.y_placeholder, self.config.class_size)
+        elif self.config.output == 'nsfw':
+            target_vec = tf.one_hot(self.y_placeholder, self.config.class_size_2)
+        else:
+            raise Exception('improper output string use "subreddit" or "nsfw"')   
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=target_vec, logits=self.prediction)
         #cross_entropy = tf.losses.hinge_loss(labels=target_vec, logits=self.prediction)
         cross_entropy_sum = tf.reduce_sum(cross_entropy)
@@ -93,7 +98,12 @@ class Model:
             # Loop over minibatches
             for j,i in enumerate(np.arange(0, num_train, train_config.minibatch_size)):
                 batch_X = data.X_train[i:i+train_config.minibatch_size]
-                batch_y = data.y_train[i:i+train_config.minibatch_size]
+                if self.config.output == 'subreddit':
+                    batch_y = data.y_train[i:i+train_config.minibatch_size]
+                elif self.config.output == 'nsfw':
+                    batch_y = data.y_train_2[i:i+train_config.minibatch_size]
+                else:
+                    raise Exception('improper output string use "subreddit" or "nsfw"')
                 session.run(self.optimize, {self.X_placeholder:batch_X, \
                                             self.y_placeholder:batch_y,self.is_training_placeholder:True})
                 
@@ -131,13 +141,28 @@ class Model:
     def eval(self, data, session, split="train"):
         if split == "train":
             X = data.X_train
-            y = data.y_train
+            if self.config.output == 'subreddit':
+                y = data.y_train
+            elif self.config.output == 'nsfw':
+                y = data.y_train_2
+            else:
+                raise Exception('improper output string use "subreddit" or "nsfw"')
         elif split == "val":
             X = data.X_val
-            y = data.y_val
+            if self.config.output == 'subreddit':
+                y = data.y_val
+            elif self.config.output == 'nsfw':
+                y = data.y_val_2
+            else:
+                raise Exception('improper output string use "subreddit" or "nsfw"')
         elif split == "test":
             X = data.X_test
-            y = data.y_test
+            if self.config.output == 'subreddit':
+                y = data.y_test
+            elif self.config.output == 'nsfw':
+                y = data.y_test_2
+            else:
+                raise Exception('improper output string use "subreddit" or "nsfw"')
             
         # Loop over minibatches
         cost = 0.0
