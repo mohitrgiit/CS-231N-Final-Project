@@ -51,9 +51,9 @@ class Model:
     
     @lazy_property
     def cost(self):
-        if self.config.output == "subreddit"
+        if self.config.output == "subreddit":
             target_vec = tf.one_hot(self.y_placeholder, self.config.subreddit_class_size)
-        elif self.config.output == "nsfw"
+        elif self.config.output == "nsfw":
             target_vec = tf.one_hot(self.y_placeholder, self.config.nsfw_class_size)
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=target_vec, logits=self.prediction)
         cross_entropy_sum = tf.reduce_sum(cross_entropy)
