@@ -32,8 +32,6 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     with open(address + file_names['nsfw'], 'rb') as file_4:
         nsfw = pickle.load(file_4)
         nsfw = np.array(nsfw)
-    # Fix dictionary order
-    dictionary = {index:subreddit for subreddit, index in dictionary.items()}
     # Mix data and split into tran, dev, and test sets
     N,W,H,C = np.shape(images)
     indices = np.arange(N)
