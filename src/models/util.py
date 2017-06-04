@@ -61,5 +61,13 @@ def import_dataset(address, file_names, train_percent = 80, dev_percent = 10):
     
     return data, dictionary
 
-def get_class_names(data, dictionary):
-    return [dictionary[index] for index in data.y_train]
+# None class name means do not filter by class
+def get_class_indices(y, dictionary, sample=5, class_name=None):
+    if class_name:
+        indices = [i for i in range(len(y)) if dictionary[y[i]] == class_name]
+    else:
+        indices = list(range(len(y)))
+    random.shuffle(indices)
+    return indices[:sample]
+    
+    
