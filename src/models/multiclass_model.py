@@ -44,7 +44,8 @@ class MulticlassModel:
     def _initialize_placeholders(self):
         self.X_placeholder = tf.placeholder(tf.float32, [None, self.config.image_height, 
                                          self.config.image_width, self.config.image_depth])
-        self.y_placeholder = tf.placeholder(tf.int64, [None]) 
+        self.y_sbrd_placeholder = tf.placeholder(tf.int64, [None]) 
+        self.y_nsfw_placeholder = tf.placeholder(tf.int64, [None]) 
         self.is_training_placeholder = tf.placeholder(tf.bool)
         
     @lazy_property
@@ -53,17 +54,21 @@ class MulticlassModel:
     
     @lazy_property
     def cost(self):
-        if self.config.output == "subreddit"
-            target_vec = tf.one_hot(self.y_placeholder, self.config.subreddit_class_size)
-        elif self.config.output == "nsfw"
-            target_vec = tf.one_hot(self.y_placeholder, self.config.nsfw_class_size)
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=target_vec, logits=self.prediction)
-        cross_entropy_sum = tf.reduce_sum(cross_entropy)
-        return cross_entropy_sum
+        sbrd_logits, nsfw_logits = self.prediction
+
+        sbrd_target_vec = tf.one_hot(self.y_sbrd_placeholder, self.config.subreddit_class_size)
+        sbrd_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=sbrd_target_vec, logits=sbrd_logits)
+        sbrd_loss = tf.reduce_sum(sbrd_cross_entropy)
+
+        nsfw_target_vec = tf.one_hot(self.y_nsfw_placeholder, self.config.nsfw_class_size)
+        nsfw_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=target_vec, logits=nsfw_logits)
+        nsfw_loss = tf.reduce_sum(nsfw_cross_entropy)
+
+        return sbrd_weight*sbrd_loss + nsfw_loss
         
     @lazy_property
     def optimize(self):
-        opt = tf.train.AdamOptimizer(self.config.learning_rate)
+        opt = tf.train.AdamOptimizer(self.config.learning_rate*decay_rate)
         #opt = tf.train.GradientDescentOptimizer(self.config.learning_rate)
 
         train_step = opt.minimize(self.cost)
@@ -78,8 +83,15 @@ class MulticlassModel:
         
     @lazy_property
     def accuracy(self):
-        correct = tf.equal(tf.argmax(self.prediction, axis = 1), self.y_placeholder)
-        return tf.reduce_mean( tf.cast(correct, tf.float32) )
+        sbrd_logits, nsfw_logits = self.prediction
+
+        sbrd_correct = tf.equal(tf.argmax(sbrd_logits, axis = 1), self.y_sbrd_placeholder)
+        sbrd_accuracy = tf.reduce_mean(tf.cast(sbrd_correct, tf.float32))
+
+        nsfw_correct = tf.equal(tf.argmax(nsfw_logits, axis = 1), self.y_nsfw_placeholder)
+        nsfw_accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+        return sbrd_accuracy, nsfw_accuracy
         
     def train(self, data, session, train_config):
         # Save model parameters

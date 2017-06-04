@@ -1,7 +1,7 @@
 class ModelConfig():
     # output can be subreddit, nsfw, or multitask
     def __init__(self, subreddit_class_size=20, nsfw_class_size=2, eval_batch_size=2000, image_width=128, image_height=128, 
-                 image_depth=3, learning_rate=1e-3, keep_prob=1.0, output = 'subreddit'):
+                 image_depth=3, learning_rate=1e-3, decay_rate=1, keep_prob=1.0, output = 'subreddit'):
         self.subreddit_class_size = subreddit_class_size
         self.nsfw_class_size = nsfw_class_size
         self.eval_batch_size = eval_batch_size
@@ -10,7 +10,9 @@ class ModelConfig():
         self.image_depth = image_depth
         self.output = output
         
+        self.orig_learning_rate = learning_rate
         self.learning_rate = learning_rate
+        self.decay_rate = decay_rate
         self.keep_prob = keep_prob
 
         # ResNet variables
