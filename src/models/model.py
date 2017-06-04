@@ -96,12 +96,12 @@ class Model:
             startTime_batch = time.clock()
             print("---------------------------------------------------------")
             # Loop over minibatches
-            for j,i in enumerate(np.arange(0, num_train, train_config.minibatch_size)):
-                batch_X = data.X_train[i:i+train_config.minibatch_size]
+            for j,i in enumerate(np.arange(0, num_train, train_config.train_batch_size)):
+                batch_X = data.X_train[i:i+train_config.train_batch_size]
                 if self.config.output == 'subreddit':
-                    batch_y = data.y_train[i:i+train_config.minibatch_size]
+                    batch_y = data.y_train[i:i+train_config.train_batch_size]
                 elif self.config.output == 'nsfw':
-                    batch_y = data.y_train_2[i:i+train_config.minibatch_size]
+                    batch_y = data.y_train_2[i:i+train_config.train_batch_size]
                 else:
                     raise Exception('improper output string use "subreddit" or "nsfw"')
                 session.run(self.optimize, {self.X_placeholder:batch_X, \
@@ -112,7 +112,7 @@ class Model:
                     batch_time = time.clock() - startTime_batch
                     startTime_batch = time.clock()
                     print("Batch {:d}/{:d} of epoch {:d} finished in {:f} seconds".format(j+1,  \
-                    int(num_train/train_config.minibatch_size)+1, (epoch+1), batch_time))
+                    int(num_train/train_config.train_batch_size)+1, (epoch+1), batch_time))
              
             # Print current output, return losses, and return accuracies
             epoch_time = time.clock() - startTime_epoch
@@ -168,8 +168,7 @@ class Model:
         cost = 0.0
         correct = 0.0
         sample_size = X.shape[0]
-        batch_size = self.config.batch_size
-        for j,i in enumerate(np.arange(0, sample_size, batch_size)):
+        for j,i in enumerate(np.arange(0, sample_size, self.config.eval_batch_size)):
             batch_X = X[i:i+batch_size]
             batch_y = y[i:i+batch_size]
             variables = [self.cost, self.accuracy]
