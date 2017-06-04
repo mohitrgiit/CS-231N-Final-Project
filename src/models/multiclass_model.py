@@ -30,8 +30,10 @@ class MulticlassModel:
         
         self._train_loss_hist = []
         self._val_loss_hist = []
-        self._train_acc_hist = []
-        self._val_acc_hist = []
+        self._train_sbrd_acc_hist = []
+        self._train_nsfw_acc_hist = []
+        self._val_sbrd_acc_hist = []
+        self._val_nsfw_acc_hist = []
         
         self._initialize_placeholders()
         self.prediction
@@ -82,6 +84,7 @@ class MulticlassModel:
     def train(self, data, session, train_config):
         # Save model parameters
         saver = None
+        self.learning_rate = self.orig_learning_rate
         if train_config.saver_address:    
             saver = tf.train.Saver()
             
@@ -95,14 +98,12 @@ class MulticlassModel:
             # Loop over minibatches
             for j,i in enumerate(np.arange(0, num_train, train_config.train_batch_size)):
                 batch_X = data.X_train[i:i+train_config.train_batch_size]
-                if self.config.output == 'subreddit':
-                    batch_y = data.y_train[i:i+train_config.train_batch_size]
-                elif self.config.output == 'nsfw':
-                    batch_y = data.y_train_2[i:i+train_config.train_batch_size]
-                else:
-                    raise Exception('improper output string use "subreddit" or "nsfw"')
+                batch_y_1 = data.y_train[i:i+train_config.train_batch_size]
+                batch_y_2 = data.y_train_2[i:i+train_config.train_batch_size]
                 session.run(self.optimize, {self.X_placeholder:batch_X, \
-                                            self.y_placeholder:batch_y,self.is_training_placeholder:True})
+                                            self.y_sbrd_placeholder:batch_y, \
+                                            self.y_nsfw_placeholder:batch_y_1, \
+                                            self.is_training_placeholder:True})
                 
                 # print run time, current batch, and current epoch
                 if (j + 1) % train_config.print_every == 0:
@@ -116,16 +117,19 @@ class MulticlassModel:
             print("Epoch {:d} training finished in {:f} seconds".format(epoch + 1, epoch_time))
             variables = [self.cost, self.accuracy]
             startTime_eval = time.clock()
-            loss_train, acc_train = self.eval(data, session, "train")
-            loss_val, acc_val = self.eval(data, session, "val")
+            loss_train, acc_sbrd_train, acc_nsfw_train = self.eval(data, session, "train")
+            loss_val, acc_sbrd_val, acc_nsfw_val = self.eval(data, session, "val")
             evaluation_time = time.clock() - startTime_eval
             print("Epoch {:d} evaluation finished in {:f} seconds".format(epoch+1, evaluation_time))
             # Append losses and accuracies to list
             self._train_loss_hist.append(loss_train)
             self._val_loss_hist.append(loss_val)
-            self._train_acc_hist.append(acc_train)
-            self._val_acc_hist.append(acc_val)
-            
+            self._train_sbrd_acc_hist.append(acc_sbrd_train)
+            self._train_nsfw_acc_hist.append(acc_nsfw_train)
+            self._val_sbrd_acc_hist.append(acc_sbrd_val)
+            self._val_nsfw_acc_hist.append(acc_nsfw_val)
+            # Decay the learning rate
+            self.learning_rate = self.learning_rate*self.decay_rate
         # Save model
 
         if train_config.saver_address: 
@@ -138,40 +142,41 @@ class MulticlassModel:
     def eval(self, data, session, split="train"):
         if split == "train":
             X = data.X_train
-            if self.config.output == 'subreddit':
-                y = data.y_train
-            elif self.config.output == 'nsfw':
-                y = data.y_train_2
+            y_1 = data.y_train
+            y_2 = data.y_train_2
         elif split == "val":
             X = data.X_val
-            if self.config.output == 'subreddit':
-                y = data.y_val
-            elif self.config.output == 'nsfw':
-                y = data.y_val_2
+            y_1 = data.y_val
+            y_2 = data.y_val_2
         elif split == "test":
             X = data.X_test
-            if self.config.output == 'subreddit':
-                y = data.y_test
-            elif self.config.output == 'nsfw':
-                y = data.y_test_2
+            y_1 = data.y_test
+            y_2 = data.y_test_2
             
         # Loop over minibatches
         cost = 0.0
-        correct = 0.0
+        correct_sbrd = 0.0
+        correct_nsfw = 0.0
         sample_size = X.shape[0]
         for j,i in enumerate(np.arange(0, sample_size, self.config.eval_batch_size)):
             batch_X = X[i:i+self.config.eval_batch_size]
-            batch_y = y[i:i+self.config.eval_batch_size]
+            batch_y_1 = y_1[i:i+self.config.eval_batch_size]
+            batch_y_2 = y_2[i:i+self.config.eval_batch_size]
             variables = [self.cost, self.accuracy]
-            cost_i, accuracy_i = session.run(variables, \
-                {self.X_placeholder:batch_X, self.y_placeholder:batch_y, self.is_training_placeholder:False})
+            cost_i, accuracy_i = session.run(variables, {self.X_placeholder:batch_X, \
+                                                         self.y_sbrd_placeholder:batch_y, \
+                                                         self.y_nsfw_placeholder:batch_y_2, \
+                                                         self.is_training_placeholder:False})
             num_sampled = np.shape(batch_X)[0]
             cost += cost_i
-            correct += accuracy_i * num_sampled
+            correct_sbrd += accuracy_i[0] * num_sampled
+            correct_nsfw += accuracy_i[1] * num_sampled
 
-        accuracy = correct / sample_size
-        print('{} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
-        return cost, accuracy 
+        accuracy_sbrd = correct_sbrd / sample_size
+        accuracy_nsfw = correct_nsfw / sample_size
+        print('subreddit {} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
+        print('nsfw {} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
+        return cost, accuracy_sbrd, accuracy_nsfw 
             
     def plot_loss_acc(self, data):
         import matplotlib.pyplot as plt
@@ -186,7 +191,9 @@ class MulticlassModel:
         ax1.plot(val_loss_hist_scale, label = 'val')
 
         ax2.set_title('Accuracy')
-        ax2.plot(self._train_acc_hist, label = 'train')
-        ax2.plot(self._val_acc_hist, label = 'val')
+        ax2.plot(self._train_sbrd_acc_hist, label = 'train, subreddit')
+        ax2.plot(self._train_nsfw_acc_hist, label = 'train, nsfw')
+        ax2.plot(self._val_sbrd_acc_hist, label = 'val, subreddit')
+        ax2.plot(self._val_nsfw_acc_hist, label = 'val, nsfw')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
