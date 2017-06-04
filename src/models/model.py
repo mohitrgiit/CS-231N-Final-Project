@@ -169,8 +169,8 @@ class Model:
         correct = 0.0
         sample_size = X.shape[0]
         for j,i in enumerate(np.arange(0, sample_size, self.config.eval_batch_size)):
-            batch_X = X[i:i+batch_size]
-            batch_y = y[i:i+batch_size]
+            batch_X = X[i:i+self.config.eval_batch_size]
+            batch_y = y[i:i+self.config.eval_batch_size]
             variables = [self.cost, self.accuracy]
             cost_i, accuracy_i = session.run(variables, \
                 {self.X_placeholder:batch_X, self.y_placeholder:batch_y, self.is_training_placeholder:False})
