@@ -25,7 +25,8 @@ class MulticlassModel:
     def __init__(self, model_config):
         self.config = model_config
         self.X_placeholder = None
-        self.y_placeholder = None
+        self.y_sbrd_placeholder = None
+        self.y_nsfw_placeholder = None
         self.is_training_placeholder = None
         
         self._train_loss_hist = []
@@ -34,6 +35,8 @@ class MulticlassModel:
         self._train_nsfw_acc_hist = []
         self._val_sbrd_acc_hist = []
         self._val_nsfw_acc_hist = []
+        
+        self.learning_rate = self.config.learning_rate
         
         self._initialize_placeholders()
         self.prediction
@@ -61,15 +64,14 @@ class MulticlassModel:
         sbrd_loss = tf.reduce_sum(sbrd_cross_entropy)
 
         nsfw_target_vec = tf.one_hot(self.y_nsfw_placeholder, self.config.nsfw_class_size)
-        nsfw_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=target_vec, logits=nsfw_logits)
+        nsfw_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=nsfw_target_vec, logits=nsfw_logits)
         nsfw_loss = tf.reduce_sum(nsfw_cross_entropy)
 
-        return sbrd_weight*sbrd_loss + nsfw_loss
+        return self.config.sbrd_weight * sbrd_loss + (1 - self.config.sbrd_weight) * nsfw_loss
         
     @lazy_property
     def optimize(self):
-        opt = tf.train.AdamOptimizer(self.config.learning_rate*decay_rate)
-        #opt = tf.train.GradientDescentOptimizer(self.config.learning_rate)
+        opt = tf.train.AdamOptimizer(self.learning_rate)
 
         train_step = opt.minimize(self.cost)
         
@@ -89,14 +91,14 @@ class MulticlassModel:
         sbrd_accuracy = tf.reduce_mean(tf.cast(sbrd_correct, tf.float32))
 
         nsfw_correct = tf.equal(tf.argmax(nsfw_logits, axis = 1), self.y_nsfw_placeholder)
-        nsfw_accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+        nsfw_accuracy = tf.reduce_mean(tf.cast(nsfw_correct, tf.float32))
 
         return sbrd_accuracy, nsfw_accuracy
         
     def train(self, data, session, train_config):
         # Save model parameters
         saver = None
-        self.learning_rate = self.orig_learning_rate
+        self.learning_rate = self.config.learning_rate
         if train_config.saver_address:    
             saver = tf.train.Saver()
             
@@ -113,8 +115,8 @@ class MulticlassModel:
                 batch_y_1 = data.y_train[i:i+train_config.train_batch_size]
                 batch_y_2 = data.y_train_2[i:i+train_config.train_batch_size]
                 session.run(self.optimize, {self.X_placeholder:batch_X, \
-                                            self.y_sbrd_placeholder:batch_y, \
-                                            self.y_nsfw_placeholder:batch_y_1, \
+                                            self.y_sbrd_placeholder:batch_y_1, \
+                                            self.y_nsfw_placeholder:batch_y_2, \
                                             self.is_training_placeholder:True})
                 
                 # print run time, current batch, and current epoch
@@ -141,7 +143,7 @@ class MulticlassModel:
             self._val_sbrd_acc_hist.append(acc_sbrd_val)
             self._val_nsfw_acc_hist.append(acc_nsfw_val)
             # Decay the learning rate
-            self.learning_rate = self.learning_rate*self.decay_rate
+            self.learning_rate -= self.learning_rate * train_config.lr_decay
         # Save model
 
         if train_config.saver_address: 
@@ -176,7 +178,7 @@ class MulticlassModel:
             batch_y_2 = y_2[i:i+self.config.eval_batch_size]
             variables = [self.cost, self.accuracy]
             cost_i, accuracy_i = session.run(variables, {self.X_placeholder:batch_X, \
-                                                         self.y_sbrd_placeholder:batch_y, \
+                                                         self.y_sbrd_placeholder:batch_y_1, \
                                                          self.y_nsfw_placeholder:batch_y_2, \
                                                          self.is_training_placeholder:False})
             num_sampled = np.shape(batch_X)[0]
@@ -186,8 +188,8 @@ class MulticlassModel:
 
         accuracy_sbrd = correct_sbrd / sample_size
         accuracy_nsfw = correct_nsfw / sample_size
-        print('subreddit {} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
-        print('nsfw {} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
+        print('subreddit {} accuracy:{:3.1f}%'.format(split, 100 * accuracy_sbrd))
+        print('nsfw {} accuracy:{:3.1f}%'.format(split, 100 * accuracy_nsfw))
         return cost, accuracy_sbrd, accuracy_nsfw 
             
     def plot_loss_acc(self, data):
