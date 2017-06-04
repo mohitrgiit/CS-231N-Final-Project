@@ -145,12 +145,13 @@ def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion Matrix',
                           cmap=plt.cm.Blues,
-                          save_address = None):
+                          save_address = None,
+                          figure_size = 11):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    plt.figure(figsize=(11,11))
+    plt.figure(figsize=(figure_size,figure_size))
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
