@@ -1,2 +1,0 @@
-model_checkpoint_path: "AlexNet_nsfw_classification"
-all_model_checkpoint_paths: "AlexNet_nsfw_classification"

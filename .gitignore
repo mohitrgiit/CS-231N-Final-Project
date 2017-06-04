@@ -1,5 +1,6 @@
 data/*
 *.pyc
 src/.ipynb_checkpoints/*
+subreddit_classification_parameters/*
 *.DS_Store
 *~

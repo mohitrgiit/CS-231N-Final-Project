@@ -21,7 +21,7 @@ def lazy_property(function):
         return getattr(self, attribute)
     return wrapper
 
-class Model:
+class MulticlassModel:
     def __init__(self, model_config):
         self.config = model_config
         self.X_placeholder = None
