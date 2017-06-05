@@ -21,6 +21,15 @@ def lazy_property(function):
         return getattr(self, attribute)
     return wrapper
 
+class MulticlassModelHistory:
+    def __init__(self):
+        self.train_loss_hist = []
+        self.val_loss_hist = []
+        self.train_sbrd_acc_hist = []
+        self.train_nsfw_acc_hist = []
+        self.val_sbrd_acc_hist = []
+        self.val_nsfw_acc_hist = []
+        
 class MulticlassModel:
     def __init__(self, model_config):
         self.config = model_config
@@ -29,12 +38,7 @@ class MulticlassModel:
         self.y_nsfw_placeholder = None
         self.is_training_placeholder = None
         
-        self._train_loss_hist = []
-        self._val_loss_hist = []
-        self._train_sbrd_acc_hist = []
-        self._train_nsfw_acc_hist = []
-        self._val_sbrd_acc_hist = []
-        self._val_nsfw_acc_hist = []
+        self.model_history = MulticlassModelHistory()
         
         self.learning_rate = self.config.learning_rate
         
@@ -136,19 +140,21 @@ class MulticlassModel:
             evaluation_time = time.clock() - startTime_eval
             print("Epoch {:d} evaluation finished in {:f} seconds".format(epoch+1, evaluation_time))
             # Append losses and accuracies to list
-            self._train_loss_hist.append(loss_train)
-            self._val_loss_hist.append(loss_val)
-            self._train_sbrd_acc_hist.append(acc_sbrd_train)
-            self._train_nsfw_acc_hist.append(acc_nsfw_train)
-            self._val_sbrd_acc_hist.append(acc_sbrd_val)
-            self._val_nsfw_acc_hist.append(acc_nsfw_val)
+            self.model_history.train_loss_hist.append(loss_train)
+            self.model_history.val_loss_hist.append(loss_val)
+            self.model_history.train_sbrd_acc_hist.append(acc_sbrd_train)
+            self.model_history.train_nsfw_acc_hist.append(acc_nsfw_train)
+            self.model_history.val_sbrd_acc_hist.append(acc_sbrd_val)
+            self.model_history.val_nsfw_acc_hist.append(acc_nsfw_val)
             # Decay the learning rate
-            self.learning_rate -= self.learning_rate * train_config.lr_decay
+            self.learning_rate *= train_config.lr_decay
         # Save model
 
         if train_config.saver_address: 
             # Save trained model to data folder
-            saver.save(session, train_config.saver_address + train_config.save_file_name)      
+            filename = train_config.saver_address + train_config.save_file_name
+            saver.save(session, filename)
+            pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))   
             
             
     # evaluate the performance (cost and accuracy) of the current model on some data
@@ -195,19 +201,20 @@ class MulticlassModel:
     def plot_loss_acc(self, data):
         import matplotlib.pyplot as plt
         
-        val_loss_hist_scale = np.array(self._val_loss_hist)/np.shape(data.X_val)[0]
-        train_loss_hist_scale = np.array(self._train_loss_hist)/np.shape(data.X_train)[0]
+        val_loss_hist_scale = np.array(self.model_history.val_loss_hist)/np.shape(data.X_val)[0]
+        train_loss_hist_scale = np.array(self.model_history.train_loss_hist)/np.shape(data.X_train)[0]
 
         f, (ax1, ax2) = plt.subplots(1,2)
         ax1.set_title('Loss')
         ax1.set_xlabel('epoch')
-        ax1.plot(train_loss_hist_scale, label = 'train')
-        ax1.plot(val_loss_hist_scale, label = 'val')
+        epoch_inds = np.arange(len(train_loss_hist_scale)) + 1
+        ax1.plot(epoch_inds, train_loss_hist_scale, label = 'train')
+        ax1.plot(epoch_inds, val_loss_hist_scale, label = 'val')
 
         ax2.set_title('Accuracy')
-        ax2.plot(self._train_sbrd_acc_hist, label = 'train, subreddit')
-        ax2.plot(self._train_nsfw_acc_hist, label = 'train, nsfw')
-        ax2.plot(self._val_sbrd_acc_hist, label = 'val, subreddit')
-        ax2.plot(self._val_nsfw_acc_hist, label = 'val, nsfw')
+        ax2.plot(epoch_inds, self.model_history.train_sbrd_acc_hist, label = 'train, subreddit')
+        ax2.plot(epoch_inds, self.model_history.train_nsfw_acc_hist, label = 'train, nsfw')
+        ax2.plot(epoch_inds, self.model_history.val_sbrd_acc_hist, label = 'val, subreddit')
+        ax2.plot(epoch_inds, self.model_history.val_nsfw_acc_hist, label = 'val, nsfw')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
