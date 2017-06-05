@@ -237,6 +237,8 @@ class Model:
         
         ax1.tick_params(axis='both', which='major', labelsize=tick_font)
         ax2.tick_params(axis='both', which='major', labelsize=tick_font)
+        plt.tight_layout()
+
         
         if save_address is not None:
             plt.savefig(save_address + save_name + '.png')
