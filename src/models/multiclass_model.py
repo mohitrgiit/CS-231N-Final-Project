@@ -205,17 +205,30 @@ class MulticlassModel:
         val_loss_hist_scale = np.array(self.model_history.val_loss_hist)/np.shape(data.X_val)[0]
         train_loss_hist_scale = np.array(self.model_history.train_loss_hist)/np.shape(data.X_train)[0]
 
-        f, (ax1, ax2) = plt.subplots(1,2)
+        f, (ax1, ax2, ax3) = plt.subplots(1,3)
+        f.set_size_inches(10, 6)
+
+        
         ax1.set_title('Loss')
         ax1.set_xlabel('epoch')
         epoch_inds = np.arange(len(train_loss_hist_scale)) + 1
         ax1.plot(epoch_inds, train_loss_hist_scale, label = 'train')
         ax1.plot(epoch_inds, val_loss_hist_scale, label = 'val')
+        ax1.legend(loc='upper right')
+      
 
-        ax2.set_title('Accuracy')
+        ax2.set_title('Subreddit Accuracy')
         ax2.plot(epoch_inds, self.model_history.train_sbrd_acc_hist, label = 'train, subreddit')
-        ax2.plot(epoch_inds, self.model_history.train_nsfw_acc_hist, label = 'train, nsfw')
         ax2.plot(epoch_inds, self.model_history.val_sbrd_acc_hist, label = 'val, subreddit')
-        ax2.plot(epoch_inds, self.model_history.val_nsfw_acc_hist, label = 'val, nsfw')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
+        
+        ax3.set_title('NSFW Accuracy')
+        ax3.plot(epoch_inds, self.model_history.train_nsfw_acc_hist, label = 'train, nsfw')
+        ax3.plot(epoch_inds, self.model_history.val_nsfw_acc_hist, label = 'val, nsfw')
+        ax3.set_xlabel('epoch')
+        ax3.legend(loc='lower right')
+        
+        plt.tight_layout()
+        
+        
