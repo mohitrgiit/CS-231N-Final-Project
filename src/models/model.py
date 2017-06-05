@@ -38,6 +38,8 @@ class Model:
         
         self.model_history = ModelHistory()
         
+        self.learning_rate = self.config.learning_rate
+        
         self._initialize_placeholders()
         self.prediction
         self.cost
@@ -90,6 +92,7 @@ class Model:
         if train_config.saver_address:
             saver = tf.train.Saver()
             
+        self.learning_rate = self.config.learning_rate
         session.run(tf.global_variables_initializer())
         num_train = data.X_train.shape[0]
         # Loop over epochs
@@ -130,7 +133,8 @@ class Model:
             self.model_history.val_loss_hist.append(loss_val)
             self.model_history.train_acc_hist.append(acc_train)
             self.model_history.val_acc_hist.append(acc_val)
-            
+            # Decay the learning rate
+            self.learning_rate *= train_config.lr_decay
         # Save model
 
         if train_config.saver_address: 
