@@ -2,6 +2,7 @@ import functools
 import time
 import numpy as np
 import tensorflow as tf
+import pickle
 
 # reduces the text needed for running @property making code more readable
 def lazy_property(function):
@@ -21,6 +22,13 @@ def lazy_property(function):
         return getattr(self, attribute)
     return wrapper
 
+class ModelHistory:
+    def __init__(self):
+        self.train_loss_hist = []
+        self.val_loss_hist = []
+        self.train_acc_hist = []
+        self.val_acc_hist = []
+
 class Model:
     def __init__(self, model_config):
         self.config = model_config
@@ -28,10 +36,7 @@ class Model:
         self.y_placeholder = None
         self.is_training_placeholder = None
         
-        self._train_loss_hist = []
-        self._val_loss_hist = []
-        self._train_acc_hist = []
-        self._val_acc_hist = []
+        self.model_history = ModelHistory()
         
         self._initialize_placeholders()
         self.prediction
@@ -82,7 +87,7 @@ class Model:
     def train(self, data, session, train_config):
         # Save model parameters
         saver = None
-        if train_config.saver_address:    
+        if train_config.saver_address:
             saver = tf.train.Saver()
             
         session.run(tf.global_variables_initializer())
@@ -121,17 +126,18 @@ class Model:
             evaluation_time = time.clock() - startTime_eval
             print("Epoch {:d} evaluation finished in {:f} seconds".format(epoch+1, evaluation_time))
             # Append losses and accuracies to list
-            self._train_loss_hist.append(loss_train)
-            self._val_loss_hist.append(loss_val)
-            self._train_acc_hist.append(acc_train)
-            self._val_acc_hist.append(acc_val)
+            self.model_history.train_loss_hist.append(loss_train)
+            self.model_history.val_loss_hist.append(loss_val)
+            self.model_history.train_acc_hist.append(acc_train)
+            self.model_history.val_acc_hist.append(acc_val)
             
         # Save model
 
         if train_config.saver_address: 
             # Save trained model to data folder
-            saver.save(session, train_config.saver_address + train_config.save_file_name)      
-            
+            filename = train_config.saver_address + train_config.save_file_name
+            saver.save(session, filename)
+            pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))
             
     # evaluate the performance (cost and accuracy) of the current model on some data
     # split is train or val or test
@@ -172,12 +178,44 @@ class Model:
         accuracy = correct / sample_size
         print('{} accuracy:{:3.1f}%'.format(split, 100 * accuracy))
         return cost, accuracy 
-            
+    
+    '''
+    def get_pred_classes(self, data, session, split="train"):
+        if split == "train":
+            X = data.X_train
+            if self.config.output == 'subreddit':
+                y = data.y_train
+            elif self.config.output == 'nsfw':
+                y = data.y_train_2
+        elif split == "val":
+            X = data.X_val
+            if self.config.output == 'subreddit':
+                y = data.y_val
+            elif self.config.output == 'nsfw':
+                y = data.y_val_2
+        elif split == "test":
+            X = data.X_test
+            if self.config.output == 'subreddit':
+                y = data.y_test
+            elif self.config.output == 'nsfw':
+                y = data.y_test_2
+                
+        sample_size = X.shape[0]
+        predicted_classes = np.empty_like(y)
+        for j,i in enumerate(np.arange(0, sample_size, self.config.eval_batch_size)):
+            batch_X = X[i:i+self.config.eval_batch_size]
+            batch_y = y[i:i+self.config.eval_batch_size]
+            logits = session.run(self.prediction, \
+                {self.X_placeholder:batch_X, self.y_placeholder:batch_y, self.is_training_placeholder:False})
+            predicted_classes[i:i+self.config.eval_batch_size] = np.argmax(logits, axis=1)
+        return predicted_classes
+    '''
+    
     def plot_loss_acc(self, data):
         import matplotlib.pyplot as plt
         
-        val_loss_hist_scale = np.array(self._val_loss_hist)/np.shape(data.X_val)[0]
-        train_loss_hist_scale = np.array(self._train_loss_hist)/np.shape(data.X_train)[0]
+        val_loss_hist_scale = np.array(self.model_history.val_loss_hist)/np.shape(data.X_val)[0]
+        train_loss_hist_scale = np.array(self.model_history.train_loss_hist)/np.shape(data.X_train)[0]
 
         f, (ax1, ax2) = plt.subplots(1,2)
         ax1.set_title('Loss')
@@ -186,7 +224,7 @@ class Model:
         ax1.plot(val_loss_hist_scale, label = 'val')
 
         ax2.set_title('Accuracy')
-        ax2.plot(self._train_acc_hist, label = 'train')
-        ax2.plot(self._val_acc_hist, label = 'val')
+        ax2.plot(self.model_history.train_acc_hist, label = 'train')
+        ax2.plot(self.model_history.val_acc_hist, label = 'val')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
