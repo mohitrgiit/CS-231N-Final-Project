@@ -187,3 +187,11 @@ def plot_confusion_matrix(cm, classes,
     # Option to save png
     if save_address is not None:
         plt.savefig(save_address + 'confusion_mat.png')
+        
+def get_class_indices(y, dictionary, sample=5, subreddit=None):
+    if subreddit:
+        indices = [i for i in range(len(y)) if dictionary[y[i]] == subreddit]
+    else:
+        indices = list(range(len(y)))
+    random.shuffle(indices)
+    return indices[:sample]
