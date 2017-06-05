@@ -220,11 +220,12 @@ class Model:
         f, (ax1, ax2) = plt.subplots(1,2)
         ax1.set_title('Loss')
         ax1.set_xlabel('epoch')
-        ax1.plot(train_loss_hist_scale, label = 'train')
-        ax1.plot(val_loss_hist_scale, label = 'val')
+        epoch_inds = np.arange(len(train_loss_hist_scale)) + 1
+        ax1.plot(epoch_inds, train_loss_hist_scale, label = 'train')
+        ax1.plot(epoch_inds, val_loss_hist_scale, label = 'val')
 
         ax2.set_title('Accuracy')
-        ax2.plot(self.model_history.train_acc_hist, label = 'train')
-        ax2.plot(self.model_history.val_acc_hist, label = 'val')
+        ax2.plot(epoch_inds, self.model_history.train_acc_hist, label = 'train')
+        ax2.plot(epoch_inds, self.model_history.val_acc_hist, label = 'val')
         ax2.set_xlabel('epoch')
         ax2.legend(loc='lower right')
