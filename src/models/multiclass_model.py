@@ -199,7 +199,8 @@ class MulticlassModel:
         print('nsfw {} accuracy:{:3.1f}%'.format(split, 100 * accuracy_nsfw))
         return cost, accuracy_sbrd, accuracy_nsfw 
             
-    def plot_loss_acc(self, data):
+    def plot_loss_acc(self, data, save_address = None, save_name = 'multitask_training_history', 
+                      title_font = 10, tick_font = 10, legend_font = 10, axis_font=10):
         import matplotlib.pyplot as plt
         
         val_loss_hist_scale = np.array(self.model_history.val_loss_hist)/np.shape(data.X_val)[0]
@@ -209,26 +210,34 @@ class MulticlassModel:
         f.set_size_inches(10, 6)
 
         
-        ax1.set_title('Loss')
-        ax1.set_xlabel('epoch')
+        ax1.set_title('Loss', fontsize = title_font)
+        ax1.set_xlabel('Epoch', fontsize = axis_font)
         epoch_inds = np.arange(len(train_loss_hist_scale)) + 1
         ax1.plot(epoch_inds, train_loss_hist_scale, label = 'train')
         ax1.plot(epoch_inds, val_loss_hist_scale, label = 'val')
-        ax1.legend(loc='upper right')
+        ax1.legend(loc='upper right',prop={'size':legend_font})
       
 
-        ax2.set_title('Subreddit Accuracy')
-        ax2.plot(epoch_inds, self.model_history.train_sbrd_acc_hist, label = 'train, subreddit')
-        ax2.plot(epoch_inds, self.model_history.val_sbrd_acc_hist, label = 'val, subreddit')
-        ax2.set_xlabel('epoch')
-        ax2.legend(loc='lower right')
+        ax2.set_title('Subreddit Accuracy', fontsize = title_font)
+        ax2.plot(epoch_inds, self.model_history.train_sbrd_acc_hist, label = 'train')
+        ax2.plot(epoch_inds, self.model_history.val_sbrd_acc_hist, label = 'val')
+        ax2.set_xlabel('Epoch', fontsize = axis_font)
+        ax2.legend(loc='lower right',prop={'size':legend_font})
         
-        ax3.set_title('NSFW Accuracy')
-        ax3.plot(epoch_inds, self.model_history.train_nsfw_acc_hist, label = 'train, nsfw')
-        ax3.plot(epoch_inds, self.model_history.val_nsfw_acc_hist, label = 'val, nsfw')
-        ax3.set_xlabel('epoch')
-        ax3.legend(loc='lower right')
+        ax3.set_title('NSFW Accuracy', fontsize = title_font)
+        ax3.plot(epoch_inds, self.model_history.train_nsfw_acc_hist, label = 'train')
+        ax3.plot(epoch_inds, self.model_history.val_nsfw_acc_hist, label = 'val')
+        ax3.set_xlabel('Epoch', fontsize = axis_font)
+        ax3.legend(loc='lower right',prop={'size':legend_font})
         
+        ax1.tick_params(axis='both', which='major', labelsize=tick_font)
+        ax2.tick_params(axis='both', which='major', labelsize=tick_font)
+        ax3.tick_params(axis='both', which='major', labelsize=tick_font)
+       
         plt.tight_layout()
+        
+        if save_address is not None:
+            plt.savefig(save_address + save_name + '.png')
+
         
         

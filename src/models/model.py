@@ -215,21 +215,30 @@ class Model:
         return predicted_classes
     '''
     
-    def plot_loss_acc(self, data):
+    def plot_loss_acc(self, data, save_address = None, save_name = 'training_history', \
+            title_font = 10, tick_font = 10, legend_font = 10, axis_font=10):
         import matplotlib.pyplot as plt
         
         val_loss_hist_scale = np.array(self.model_history.val_loss_hist)/np.shape(data.X_val)[0]
         train_loss_hist_scale = np.array(self.model_history.train_loss_hist)/np.shape(data.X_train)[0]
 
         f, (ax1, ax2) = plt.subplots(1,2)
-        ax1.set_title('Loss')
-        ax1.set_xlabel('epoch')
+        ax1.set_title('Loss', fontsize = title_font)
+        ax1.set_xlabel('Epoch', fontsize = axis_font)
         epoch_inds = np.arange(len(train_loss_hist_scale)) + 1
         ax1.plot(epoch_inds, train_loss_hist_scale, label = 'train')
         ax1.plot(epoch_inds, val_loss_hist_scale, label = 'val')
 
-        ax2.set_title('Accuracy')
+        ax2.set_title('Accuracy', fontsize = title_font)
         ax2.plot(epoch_inds, self.model_history.train_acc_hist, label = 'train')
         ax2.plot(epoch_inds, self.model_history.val_acc_hist, label = 'val')
-        ax2.set_xlabel('epoch')
-        ax2.legend(loc='lower right')
+        ax2.set_xlabel('Epoch', fontsize = axis_font)
+        ax2.legend(loc='lower right',prop={'size':legend_font})
+        
+        ax1.tick_params(axis='both', which='major', labelsize=tick_font)
+        ax2.tick_params(axis='both', which='major', labelsize=tick_font)
+        plt.tight_layout()
+
+        
+        if save_address is not None:
+            plt.savefig(save_address + save_name + '.png')
