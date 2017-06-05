@@ -146,7 +146,17 @@ def plot_confusion_matrix(cm, classes,
                           title='Confusion Matrix',
                           cmap=plt.cm.Blues,
                           save_address = None,
-                          figure_size = 11):
+                          figure_size = 11,
+                          save_name = 'confusion_mat',
+                          tick_font = 10, 
+                          box_font = 10,
+                          axis_font = 10,
+                          title_font = 10,
+                          colorbar_font = 10,
+                          left_space = 10,
+                          right_space = 10,
+                          top_space = 10,
+                          bottom_space = 10):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -160,8 +170,8 @@ def plot_confusion_matrix(cm, classes,
     
     plt.figure(figsize=(figure_size,figure_size))
     plt.imshow(cm, interpolation='nearest', cmap=cmap).set_clim(0,100)
-    plt.title(title)
-    plt.colorbar()
+    plt.title(title, fontsize = title_font)
+    cbar = plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=90)
     plt.yticks(tick_marks, classes)
@@ -178,12 +188,21 @@ def plot_confusion_matrix(cm, classes,
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, round(cm[i, j],1),
                  horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+                 color="white" if cm[i, j] > thresh else "black",
+                 fontsize = box_font)
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.show()
+    plt.ylabel('True label', fontsize = axis_font)
+    plt.xlabel('Predicted label', fontsize = axis_font)
+    
+    plt.tight_layout()
+    plt.tick_params(axis='both', which='major', labelsize=tick_font)
+    cbar.ax.tick_params(labelsize=colorbar_font) 
+    plt.subplots_adjust(left=left_space, right=right_space, top=top_space, bottom=bottom_space)
+
     
     # Option to save png
     if save_address is not None:
-        plt.savefig(save_address + 'confusion_mat.png')
+        plt.savefig(save_address + save_name + '.png')
+        
+    plt.show()
+
