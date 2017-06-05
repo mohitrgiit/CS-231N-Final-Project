@@ -2,6 +2,7 @@ import functools
 import time
 import numpy as np
 import tensorflow as tf
+import pickle
 
 # reduces the text needed for running @property making code more readable
 def lazy_property(function):
