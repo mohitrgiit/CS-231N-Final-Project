@@ -217,16 +217,19 @@ def get_class_indices(y, dictionary, sample=5, subreddit=None):
 # is specified by num_photos.
 def download_sample_photos(data, dictionary, num_photos, output_file_path):
     from scipy.misc import imsave
-    X = data.X_train
-    y_sbrd = data.y_train
-    y_nsfw = data.y_train_2
-    y_sbrd_name = [dictionary[y] for y in y_sbrd]
-    y_nsfw_name = [dictionary[y] for y in y_nsfw]
+    indices = np.random.choice(data.X_train.shape[0], num_photos)
+    X = data.X_train[indices]
+    y_sbrd = data.y_train[indices]
+    y_nsfw = data.y_train_2[indices]
+    inverted_dict = {j:i for i, j in dictionary.items()}
+    y_sbrd_name = [inverted_dict[y] for y in y_sbrd]
+    y_nsfw_name = ['sfw' if y == 0 else 'nsfw' for y in y_nsfw]
     
-    indices = np.random.choice(X.shape[0], num_photos)
     y_sbrd_out = open(output_file_path + 'y_sbrd', 'w')
     y_nsfw_out = open(output_file_path + 'y_nsfw', 'w')
     for i in range(num_photos):
-        imsave(output_file_path + 'img_' + str(i+1), X[i])
+        imsave('{}img_{}.png'.format(output_file_path, i+1), X[i])
         y_sbrd_out.write(str(y_sbrd_name[i]) + '\n')
         y_nsfw_out.write(str(y_nsfw_name[i]) + '\n')
+    y_sbrd_out.close()
+    y_nsfw_out.close()
