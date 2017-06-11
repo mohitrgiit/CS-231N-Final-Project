@@ -45,8 +45,9 @@ class GoogleNet(Model):
         conv_1 = tf.layers.conv2d(self.X_placeholder, 64, [7, 7], strides=[2, 2], padding="SAME", activation=tf.nn.relu)
         pool_1 = tf.layers.max_pooling2d(conv_1, [3, 3], [2, 2], "SAME")
         norm_1 = tf.layers.batch_normalization(pool_1, training=self.is_training_placeholder)
-        conv_2 = tf.layers.conv2d(norm_1, 192, [3, 3], strides=[1, 1], padding="SAME", activation=tf.nn.relu)
-        pool_2 = tf.layers.max_pooling2d(conv_2, [3, 3], [2, 2], "SAME")
+        conv_2 = tf.layers.conv2d(norm_1, 64, [1, 1], strides=[1, 1], padding="SAME", activation=tf.nn.relu)
+        conv_3 = tf.layers.conv2d(conv_2, 192, [3, 3], strides=[1, 1], padding="SAME", activation=tf.nn.relu)
+        pool_2 = tf.layers.max_pooling2d(conv_3, [3, 3], [2, 2], "SAME")
         norm_2 = tf.layers.batch_normalization(pool_2, training=self.is_training_placeholder)
 
         inception_1a = self.inception(norm_2, 64, 64, 64, 64, 96, "AVG", 32, False)
@@ -64,7 +65,11 @@ class GoogleNet(Model):
         pool_3 = tf.nn.pool(inception_3b, [4, 4], "AVG", "VALID", strides=[1, 1])
         if self.config.keep_prob < 1.0:
             pool_3 = tf.nn.dropout(pool_3, self.config.keep_prob)
-        y_out = tf.layers.dense(pool_3, self.config.subreddit_class_size)
+        if self.config.output == "subreddit":
+            output_size = self.config.subreddit_class_size
+        elif self.config.output == "nsfw":
+            output_size = self.config.nsfw_class_size
+        y_out = tf.layers.dense(pool_3, output_size)
         return y_out[:, 0, 0, :]
 
 class GoogleNetMulticlass(MulticlassModel):

@@ -139,7 +139,6 @@ def sample_data(samples, data, dictionary):
     
     return dictionary_2
 
-
 # Code to plot the confusion matrix
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -213,3 +212,24 @@ def get_class_indices(y, dictionary, sample=5, subreddit=None):
         indices = list(range(len(y)))
     random.shuffle(indices)
     return indices[:sample]
+
+# Download a sample of the (train) photos, along with their labels from data. The number of photos to download 
+# is specified by num_photos.
+def download_sample_photos(data, dictionary, num_photos, output_file_path):
+    from scipy.misc import imsave
+    indices = np.random.choice(data.X_train.shape[0], num_photos)
+    X = data.X_train[indices]
+    y_sbrd = data.y_train[indices]
+    y_nsfw = data.y_train_2[indices]
+    inverted_dict = {j:i for i, j in dictionary.items()}
+    y_sbrd_name = [inverted_dict[y] for y in y_sbrd]
+    y_nsfw_name = ['sfw' if y == 0 else 'nsfw' for y in y_nsfw]
+    
+    y_sbrd_out = open(output_file_path + 'y_sbrd', 'w')
+    y_nsfw_out = open(output_file_path + 'y_nsfw', 'w')
+    for i in range(num_photos):
+        imsave('{}img_{}.png'.format(output_file_path, i+1), X[i])
+        y_sbrd_out.write(str(y_sbrd_name[i]) + '\n')
+        y_nsfw_out.write(str(y_nsfw_name[i]) + '\n')
+    y_sbrd_out.close()
+    y_nsfw_out.close()
