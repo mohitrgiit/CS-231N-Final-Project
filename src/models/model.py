@@ -142,12 +142,12 @@ class Model:
             self.learning_rate *= train_config.lr_decay
             
             # Save model if it does well
-            if acc_val > self.model_history.best_val_acc and train_config.saver_address:
+            if acc_val > self.model_history.best_val_acc:
                 self.model_history.best_val_acc = acc_val
-                
-                filename = train_config.saver_address + train_config.save_file_name
-                saver.save(session, filename)
-                pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))
+                if train_config.saver_address:
+                    filename = train_config.saver_address + train_config.save_file_name
+                    saver.save(session, filename)
+                    pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))
             
     # evaluate the performance (cost and accuracy) of the current model on some data
     # split is train or val or test
