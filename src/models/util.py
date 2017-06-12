@@ -147,20 +147,32 @@ def plot_confusion_matrix(cm, classes,
                           save_address = None,
                           figure_size = 11,
                           save_name = 'confusion_mat',
-                          tick_font = 10, 
-                          box_font = 10,
-                          axis_font = 10,
-                          title_font = 10,
-                          colorbar_font = 10,
-                          left_space = 10,
-                          right_space = 10,
-                          top_space = 10,
-                          bottom_space = 10):
+                          task='subreddit'):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    
+    if task == 'subreddit':
+        tick_font = 12 
+        box_font = 10
+        axis_font = 40
+        title_font = 50
+        colorbar_font = 20
+        left_space = 0.2
+        right_space = 1
+        top_space = 0.97
+        bottom_space = 0.05
+    elif task == 'nsfw':
+        tick_font = 50
+        box_font = 60
+        axis_font = 55
+        title_font = 58,
+        colorbar_font = 40
+        left_space = 0.25
+        right_space = 0.95
+        top_space = 0.97
+        bottom_space = 0.05
+        
     if normalize:
         cm = (cm.astype('float') / cm.sum(axis=1)[:, np.newaxis])*100
         print("Normalized confusion matrix")
@@ -217,16 +229,19 @@ def get_class_indices(y, dictionary, sample=5, subreddit=None):
 # is specified by num_photos.
 def download_sample_photos(data, dictionary, num_photos, output_file_path):
     from scipy.misc import imsave
-    X = data.X_train
-    y_sbrd = data.y_train
-    y_nsfw = data.y_train_2
-    y_sbrd_name = [dictionary[y] for y in y_sbrd]
-    y_nsfw_name = [dictionary[y] for y in y_nsfw]
+    indices = np.random.choice(data.X_train.shape[0], num_photos)
+    X = data.X_train[indices]
+    y_sbrd = data.y_train[indices]
+    y_nsfw = data.y_train_2[indices]
+    inverted_dict = {j:i for i, j in dictionary.items()}
+    y_sbrd_name = [inverted_dict[y] for y in y_sbrd]
+    y_nsfw_name = ['sfw' if y == 0 else 'nsfw' for y in y_nsfw]
     
-    indices = np.random.choice(X.shape[0], num_photos)
     y_sbrd_out = open(output_file_path + 'y_sbrd', 'w')
     y_nsfw_out = open(output_file_path + 'y_nsfw', 'w')
     for i in range(num_photos):
-        imsave(output_file_path + 'img_' + str(i+1), X[i])
+        imsave('{}img_{}.png'.format(output_file_path, i+1), X[i])
         y_sbrd_out.write(str(y_sbrd_name[i]) + '\n')
         y_nsfw_out.write(str(y_nsfw_name[i]) + '\n')
+    y_sbrd_out.close()
+    y_nsfw_out.close()

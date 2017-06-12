@@ -31,6 +31,8 @@ class MulticlassModelHistory:
         self.val_sbrd_acc_hist = []
         self.val_nsfw_acc_hist = []
         
+        self.best_val_acc = [0.0, 0.0]
+        
 class MulticlassModel:
     def __init__(self, model_config):
         self.config = model_config
@@ -100,14 +102,15 @@ class MulticlassModel:
 
         return sbrd_accuracy, nsfw_accuracy
         
-    def train(self, data, session, train_config):
+    def train(self, data, session, train_config, resume=False):
         # Save model parameters
         saver = None
         self.learning_rate = self.config.learning_rate
         if train_config.saver_address:    
             saver = tf.train.Saver()
             
-        session.run(tf.global_variables_initializer())
+        if not resume:
+            session.run(tf.global_variables_initializer())
         num_train = data.X_train.shape[0]
         # Loop over epochs
         for epoch in range(train_config.num_epochs):
@@ -149,14 +152,18 @@ class MulticlassModel:
             self.model_history.val_nsfw_acc_hist.append(acc_nsfw_val)
             # Decay the learning rate
             self.learning_rate *= train_config.lr_decay
-        # Save model
-
-        if train_config.saver_address: 
-            # Save trained model to data folder
-            filename = train_config.saver_address + train_config.save_file_name
-            saver.save(session, filename)
-            pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))   
             
+            # Save model if it does well
+            mixed_val = (acc_sbrd_val / 12) + ((acc_nsfw_val / 12) * 11)
+            best_val = self.model_history.best_val_acc
+            best_mixed_val = (best_val[0] / 12) + ((best_val[1] / 12) * 11)
+            if mixed_val > best_mixed_val:
+                self.model_history.best_val_acc = [acc_sbrd_val, acc_nsfw_val]      
+                if train_config.saver_address:
+                    filename = train_config.saver_address + train_config.save_file_name
+                    saver.save(session, filename)
+                    pickle.dump(self.model_history, open(filename + "_modelhist", 'wb'))
+
             
     # evaluate the performance (cost and accuracy) of the current model on some data
     # split is train or val or test
