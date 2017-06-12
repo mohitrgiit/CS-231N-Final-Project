@@ -166,7 +166,7 @@ def plot_confusion_matrix(cm, classes,
         tick_font = 50
         box_font = 60
         axis_font = 55
-        title_font = 58,
+        title_font = 58
         colorbar_font = 40
         left_space = 0.25
         right_space = 0.95
@@ -215,6 +215,12 @@ def plot_confusion_matrix(cm, classes,
     if save_address is not None:
         plt.savefig(save_address + save_name + '.png')
         plt.show()
+        
+def get_f1_score(actual, predicted):
+    from sklearn.metrics import f1_score
+    
+    f1_scores = f1_score(actual, predicted, average='macro')
+    return f1_scores
         
 def get_class_indices(y, dictionary, sample=5, subreddit=None):
     inverted_dictionary = {j:i for i, j in dictionary.items()}
