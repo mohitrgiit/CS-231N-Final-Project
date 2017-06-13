@@ -147,20 +147,32 @@ def plot_confusion_matrix(cm, classes,
                           save_address = None,
                           figure_size = 11,
                           save_name = 'confusion_mat',
-                          tick_font = 10, 
-                          box_font = 10,
-                          axis_font = 10,
-                          title_font = 10,
-                          colorbar_font = 10,
-                          left_space = 10,
-                          right_space = 10,
-                          top_space = 10,
-                          bottom_space = 10):
+                          task='subreddit'):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    
+    if task == 'subreddit':
+        tick_font = 12 
+        box_font = 10
+        axis_font = 40
+        title_font = 50
+        colorbar_font = 20
+        left_space = 0.2
+        right_space = 1
+        top_space = 0.97
+        bottom_space = 0.05
+    elif task == 'nsfw':
+        tick_font = 50
+        box_font = 60
+        axis_font = 55
+        title_font = 58
+        colorbar_font = 40
+        left_space = 0.25
+        right_space = 0.95
+        top_space = 0.97
+        bottom_space = 0.05
+        
     if normalize:
         cm = (cm.astype('float') / cm.sum(axis=1)[:, np.newaxis])*100
         print("Normalized confusion matrix")
@@ -203,6 +215,12 @@ def plot_confusion_matrix(cm, classes,
     if save_address is not None:
         plt.savefig(save_address + save_name + '.png')
         plt.show()
+        
+def get_f1_score(actual, predicted):
+    from sklearn.metrics import f1_score
+    
+    f1_scores = f1_score(actual, predicted, average='macro')
+    return f1_scores
         
 def get_class_indices(y, dictionary, sample=5, subreddit=None):
     inverted_dictionary = {j:i for i, j in dictionary.items()}
