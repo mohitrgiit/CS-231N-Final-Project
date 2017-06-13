@@ -1,5 +1,6 @@
 from model import Model, lazy_property
 from multiclass_model import MulticlassModel
+import tensorflow as tf
 
 class ResNet(Model):
     

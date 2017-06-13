@@ -30,6 +30,7 @@ class ModelHistory:
         self.val_acc_hist = []
         
         self.best_val_acc = 0.0
+        self.best_val_cost = 0.0
 
 class Model:
     def __init__(self, model_config):
@@ -144,6 +145,7 @@ class Model:
             # Save model if it does well
             if acc_val > self.model_history.best_val_acc:
                 self.model_history.best_val_acc = acc_val
+                self.model_history.best_val_cost = loss_val
                 if train_config.saver_address:
                     filename = train_config.saver_address + train_config.save_file_name
                     saver.save(session, filename)

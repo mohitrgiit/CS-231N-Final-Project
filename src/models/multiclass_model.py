@@ -32,6 +32,7 @@ class MulticlassModelHistory:
         self.val_nsfw_acc_hist = []
         
         self.best_val_acc = [0.0, 0.0]
+        self.best_val_cost = 0.0
         
 class MulticlassModel:
     def __init__(self, model_config):
@@ -158,7 +159,8 @@ class MulticlassModel:
             best_val = self.model_history.best_val_acc
             best_mixed_val = (best_val[0] / 12) + ((best_val[1] / 12) * 11)
             if mixed_val > best_mixed_val:
-                self.model_history.best_val_acc = [acc_sbrd_val, acc_nsfw_val]      
+                self.model_history.best_val_acc = [acc_sbrd_val, acc_nsfw_val]
+                self.model_history.best_val_cost = loss_val
                 if train_config.saver_address:
                     filename = train_config.saver_address + train_config.save_file_name
                     saver.save(session, filename)

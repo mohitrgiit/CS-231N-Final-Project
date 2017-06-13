@@ -1,5 +1,6 @@
 from model import Model, lazy_property
 from multiclass_model import MulticlassModel
+import tensorflow as tf
 
 class AlexNet(Model):
     
@@ -67,16 +68,16 @@ class AlexNetMulticlass(MulticlassModel):
         mp_flat = tf.reshape(mp3,[-1,4096])
         
         # First path for subreddit
-        aff1 = tf.layers.dense(mp_flat, 4096)
+        aff1 = tf.layers.dense(mp_flat, 2048)
         h6 = tf.nn.relu(aff1)
-        aff2 = tf.layers.dense(h6, 4096)
+        aff2 = tf.layers.dense(h6, 2048)
         h7 = tf.nn.relu(aff2)
         y_out = tf.layers.dense(h7, self.config.subreddit_class_size)
         
         # First path for nsfw
-        aff1_2 = tf.layers.dense(mp_flat, 4096)
+        aff1_2 = tf.layers.dense(mp_flat, 2048)
         h6_2 = tf.nn.relu(aff1_2)
-        aff2_2 = tf.layers.dense(h6_2, 4096)
+        aff2_2 = tf.layers.dense(h6_2, 2048)
         h7_2 = tf.nn.relu(aff2_2)
         y_out_2 = tf.layers.dense(h7_2, self.config.nsfw_class_size)
     
